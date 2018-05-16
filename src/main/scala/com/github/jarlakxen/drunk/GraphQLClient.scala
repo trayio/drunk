@@ -52,7 +52,10 @@ class GraphQLClient private[GraphQLClient] (uri: Uri, options: ClientOptions, ba
 
     for {
       (statusCode, rawBody) <- backend.send(uri, body)
-      jsonBody <- Future.fromTry(parse(rawBody).toTry)
+      jsonBody <- Future.fromTry(parse(rawBody) match {
+        case Right(b) => Success(b)
+        case Left(a)  => Failure(a)
+      })
     } yield (statusCode, jsonBody)
   }
 
@@ -155,13 +158,19 @@ object GraphQLClient {
       errorsNode <- cursor.downField("errors").focus
       errors <- errorsNode.asArray
     } yield {
-      val msgs = errors.map(_.hcursor.downField("message").as[String].toOption).flatten.toList
+      val msgs = errors.flatMap(_.hcursor.downField("message").as[String] match {
+        case Right(b) => Some(b)
+        case _ => None
+      }).toList
       GraphQLResponseError(msgs, statusCode)
     }
   }
 
   private[GraphQLClient] def extractData[Res](jsonBody: Json)(implicit dec: Decoder[Res]): Try[GraphQLResponseData[Res]] =
-    jsonBody.hcursor.downField("data").as[Res].toTry.map(GraphQLResponseData(_))
+    (jsonBody.hcursor.downField("data").as[Res] match {
+      case Right(b) => Success(b)
+      case Left(a)  => Failure(a)
+    }).map(GraphQLResponseData(_))
 
   private[GraphQLClient] def extractErrorOrData[Res](jsonBody: Json, statusCode: Int)(implicit dec: Decoder[Res]): Try[GraphQLResponse[Res]] = {
     val errors: Option[Try[GraphQLResponse[Res]]] =
@@ -173,11 +182,13 @@ object GraphQLClient {
   }
 
   private[GraphQLClient] def extractExtensions(jsonBody: Json): GraphQLExtensions =
-    jsonBody
+    (jsonBody
       .hcursor
       .downField("extensions")
-      .as[GraphQLExtensions]
-      .toOption
+      .as[GraphQLExtensions] match {
+      case Right(b) => Some(b)
+      case _        => None
+    })
       .getOrElse(NoExtensions)
 
 }
