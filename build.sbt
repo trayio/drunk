@@ -1,7 +1,7 @@
 // ··· Project Settings ···
 import sbt.Keys.publishTo
 // scalafixSettings
-releaseVersionBump := sbtrelease.Version.Bump.Minor
+
 // ··· Project Info ···
 
 val projectName = "drunk-graphql-client"
@@ -18,11 +18,10 @@ organizationName := "Facundo Viale"
 startYear := Some(2018)
 licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 
-// ··· Project Options ···
+releaseCrossBuild := true
+releaseVersionBump := sbtrelease.Version.Bump.Minor
 
-//lazy val root = (project in file("."))
-
-
+// ··· Project Options ··
 lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(

@@ -2,4 +2,4 @@
 
 #sbt +publish
 
-sbt release cross with-defaults
+sbt release with-defaults #cross
