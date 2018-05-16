@@ -1,7 +1,7 @@
 // ··· Project Settings ···
 import sbt.Keys.publishTo
 // scalafixSettings
-
+releaseVersionBump := sbtrelease.Version.Bump.Minor
 // ··· Project Info ···
 
 val projectName = "drunk-graphql-client"
