@@ -167,10 +167,11 @@ class GraphQLClientSpec extends Spec with TestHttpServer {
       """
 
     val expected = HeroQuery(Droid("2001", Some("R2-D2"), List("Luke Skywalker", "Han Solo", "Leia Organa"), List(Episode.NEWHOPE, Episode.EMPIRE, Episode.JEDI), None))
-    client.query[HeroQuery](doc).result.futureValue shouldBe Right(GraphQLResponseData(expected))
+    client.query[HeroQuery, Json](doc).result.futureValue shouldBe Right(GraphQLResponseData(expected))
   }
 
   it should "fail to execute query" in {
+    import io.circe.syntax._
     val client = GraphQLClient(s"http://$host:$port/api/graphql/test2")
 
     val doc =
@@ -182,7 +183,10 @@ class GraphQLClientSpec extends Spec with TestHttpServer {
         }
       """
 
-    client.query[Human](doc).result.futureValue shouldBe Left(GraphQLResponseError(List("Cannot query field 'test'"), 200))
+    client.query[Human, Json](doc).result.futureValue shouldBe Left(GraphQLResponseError(List(Map(
+      "message" -> "Cannot query field 'test'".asJson,
+      "locations" -> Seq(Map("line" -> 14, "column" -> 7)).asJson
+    ).asJson), 200))
   }
 
   it should "get profiling metrics" in {
@@ -211,7 +215,7 @@ class GraphQLClientSpec extends Spec with TestHttpServer {
     val metrics = GraphQLMetricsExtension(362, 0, 0, "", types)
     val extensions = GraphQLExtensions(Some(metrics), None)
 
-    client.query[Human](doc).extensions.futureValue shouldBe extensions
+    client.query[Human, Json](doc).extensions.futureValue shouldBe extensions
   }
 
 }

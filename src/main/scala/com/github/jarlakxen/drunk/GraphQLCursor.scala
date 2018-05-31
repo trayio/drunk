@@ -22,22 +22,22 @@ import com.github.jarlakxen.drunk.extensions._
 import io.circe._
 import sangria._
 
-class GraphQLCursor[Res, Vars](
+class GraphQLCursor[Res, Err, Vars](
   client: GraphQLClient,
-  val result: Future[GraphQLClient.GraphQLResponse[Res]],
+  val result: Future[GraphQLClient.GraphQLResponse[Res, Err]],
   val extensions: Future[GraphQLExtensions],
-  val lastOperation: GraphQLOperation[Res, Vars])(implicit responseDecoder: Decoder[Res], ec: ExecutionContext) {
+  val lastOperation: GraphQLOperation[Res, Vars])(implicit responseDecoder: Decoder[Res], errorDecoder: Decoder[Err], ec: ExecutionContext) {
 
-  def refetch: GraphQLCursor[Res, Vars] =
+  def refetch: GraphQLCursor[Res, Err, Vars] =
     refetch(None)
 
-  def fetchMore(variables: Vars): GraphQLCursor[Res, Vars] =
+  def fetchMore(variables: Vars): GraphQLCursor[Res, Err, Vars] =
     refetch(Some(variables))
 
-  def fetchMore(newVars: Vars => Vars): GraphQLCursor[Res, Vars] =
+  def fetchMore(newVars: Vars => Vars): GraphQLCursor[Res, Err, Vars] =
     refetch(lastOperation.variables.map(newVars(_)))
 
-  private def refetch(variables: Option[Vars]): GraphQLCursor[Res, Vars] = {
+  private def refetch(variables: Option[Vars]): GraphQLCursor[Res, Err, Vars] = {
     implicit val variablesEncoder = lastOperation.variablesEncoder
     client.query(lastOperation.doc, variables, lastOperation.name)
   }
