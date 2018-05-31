@@ -170,22 +170,24 @@ object GraphQLClient {
       val errorsDecoded: immutable.Seq[Result[Err]] = errors.map(_.as[Err])
       val firstFailed: Option[DecodingFailure] = errorsDecoded.find(_.isLeft).map(_.left.get)
       firstFailed match {
-        case Some(failed) => Failure(new RuntimeException(s"Failed to decode at least one error object in: $errorsNode", failed))
+        case Some(failed) => Failure(ResponseDecodingException(s"Failed to decode at least one error object in: ${errorsNode.noSpaces}", failed))
         case None => Success(GraphQLResponseError(errorsDecoded.map(_.right.get), statusCode))
       }
     }
   }
 
-  private[GraphQLClient] def extractData[Res](jsonBody: Json)(implicit dec: Decoder[Res]): Try[GraphQLResponseData[Res]] =
-    (jsonBody.hcursor.downField("data").as[Res] match {
-      case Right(b) => Success(b)
-      case Left(a)  => Failure(a)
+  private[GraphQLClient] def extractData[Res](jsonBody: Json)(implicit dec: Decoder[Res]): Try[GraphQLResponseData[Res]] = {
+    val cursor = jsonBody.hcursor.downField("data")
+    (cursor.as[Res] match {
+      case Right(data) => Success(data)
+      case Left(failure)  => Failure(ResponseDecodingException(s"Failed to decode data: ${cursor.focus.map(_.noSpaces)}", failure))
     }).map(GraphQLResponseData(_))
+  }
 
   private[GraphQLClient] def extractErrorOrData[Res, Err](jsonBody: Json, statusCode: Int)(implicit dec: Decoder[Res], decErr: Decoder[Err]): Try[GraphQLResponse[Res, Err]] = {
-    val errors: Option[Try[GraphQLResponse[Res, Err]]] =
+    def errors: Option[Try[GraphQLResponse[Res, Err]]] =
       extractErrors[Err](jsonBody, statusCode).map(errors => errors.map(Left(_)))
-    val data: Try[GraphQLResponse[Res, Err]] =
+    def data: Try[GraphQLResponse[Res, Err]] =
       extractData[Res](jsonBody).map(Right(_))
 
     errors.getOrElse(data)

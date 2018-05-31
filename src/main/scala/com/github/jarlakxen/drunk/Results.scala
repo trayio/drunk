@@ -16,6 +16,10 @@
 
 package com.github.jarlakxen.drunk
 
+import io.circe.DecodingFailure
+
 final case class GraphQLResponseError[T](errors: Seq[T], networkStatus: Int)
 
 final case class GraphQLResponseData[T](data: T)
+
+final case class ResponseDecodingException(message: String, cause: DecodingFailure) extends RuntimeException(message, cause)
