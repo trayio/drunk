@@ -85,7 +85,7 @@ class AkkaHttpBackend private[AkkaHttpBackend] (
       if (code >= 200 && code < 300) {
         stringBody.map((code, _))
       } else {
-        stringBody.flatMap { body => Future.failed(new RuntimeException(s"${uri.toString} returned $code with body: $body")) }
+        stringBody.flatMap { body => Future.failed(new NonOkHttpCodeException(code, body)) }
       }
     }
   }
