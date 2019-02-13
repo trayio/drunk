@@ -52,8 +52,8 @@ resolvers ++= Seq(Resolver.sonatypeRepo("releases"), Resolver.sonatypeRepo("snap
 // ··· Project Dependencies ···
 val sangriaV        = "1.4.0"
 val sangriaCirceV   = "1.2.1"
-val akkaHttpV       = "10.1.1"
-val akkaHttpCircleV = "1.20.0"
+val akkaHttpV       = "10.0.6"
+val akkaHttpCircleV = "1.19.0"
 val circeV          = "0.9.3"
 val slf4JV          = "1.7.25"
 val logbackV        = "1.2.3"
