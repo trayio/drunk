@@ -82,7 +82,7 @@ class AkkaHttpBackend private[AkkaHttpBackend] (
       val decodedResponse = decodeResponse(hr)
       val stringBody = bodyToString(decodedResponse, charsetFromHeaders)
 
-      if (code >= 200 && code < 500) {
+      if (code >= 200 && code < 300) {
         stringBody.map((code, _))
       } else {
         stringBody.flatMap { body => Future.failed(new NonOkHttpCodeException(code, body)) }
